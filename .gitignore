@@ -1,6 +1,7 @@
 .idea/
 .vscode/
 build/
+CMakeUserPresets.json
 # Prerequisites
 *.d
 

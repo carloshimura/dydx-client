@@ -8,6 +8,6 @@ mkdir build
 cd build
 conan profile detect
 conan install ../conanfile.txt --build=missing -of .
-cmake -S .. -B . -DCMAKE_TOOLCHAIN_FILEconan_toolchain.cmake
+cmake -S .. -B .
 cmake --build --parallel 4
 ``` 

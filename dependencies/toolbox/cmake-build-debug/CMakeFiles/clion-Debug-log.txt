@@ -1,0 +1,29 @@
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=make -G "CodeBlocks - Unix Makefiles" -S /home/carlos/development/toolbox -B /home/carlos/development/toolbox/cmake-build-debug
+CMake Deprecation Warning:
+  Support for "Extra Generators" like
+
+    CodeBlocks
+
+  is deprecated and will be removed from a future version of CMake.  IDEs may
+  use the cmake-file-api(7) to view CMake-generated project build trees.
+
+
+-- The CXX compiler identification is GNU 13.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Looking for C++ include iosfwd
+-- Looking for C++ include iosfwd - found
+-- Looking for C++ include regex
+-- Looking for C++ include regex - found
+-- Looking for C++ include exception
+-- Looking for C++ include exception - found
+-- Looking for C++ include termios.h
+-- Looking for C++ include termios.h - found
+-- Looking for C++ include unistd.h
+-- Looking for C++ include unistd.h - found
+-- Configuring done (1.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/carlos/development/toolbox/cmake-build-debug

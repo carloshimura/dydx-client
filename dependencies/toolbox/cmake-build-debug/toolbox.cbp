@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="toolbox"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\cfg\;CMake Files\modules\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="toolbox">
+				<Option output="/home/carlos/development/toolbox/cmake-build-debug/lib/libtoolbox.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DTOOLBOX_EXPORTS"/>
+					<Add option="-D_CRT_SECURE_NO_WARNINGS=1"/>
+					<Add directory="/home/carlos/development/toolbox/include"/>
+					<Add directory="/usr/include/c++/13"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/13"/>
+					<Add directory="/usr/include/c++/13/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/13/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 toolbox"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="toolbox/fast">
+				<Option output="/home/carlos/development/toolbox/cmake-build-debug/lib/libtoolbox.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DTOOLBOX_EXPORTS"/>
+					<Add option="-D_CRT_SECURE_NO_WARNINGS=1"/>
+					<Add directory="/home/carlos/development/toolbox/include"/>
+					<Add directory="/usr/include/c++/13"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/13"/>
+					<Add directory="/usr/include/c++/13/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/13/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 toolbox/fast"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="package">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 package"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="package_source">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 package_source"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="list_install_components">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 list_install_components"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 install"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/local">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/local"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/strip">
+				<Option working_dir="/home/carlos/development/toolbox/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/strip"/>
+					<CompileFile command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="make -j16 -f &quot;/home/carlos/development/toolbox/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/collections.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data.hpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/base64.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/basic_data.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/bytes_array.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/bytes_buffer.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/bytes_data.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/literals.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/transformers.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/data/utils.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/io.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/log.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/strings.hpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/strings/decimal_formatter.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/strings/regex.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/term.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/time_profiler.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/include/toolbox/toolbox_config.h">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/data/base64.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/data/bytes_buffer.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/data/bytes_data.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/data/utils.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/io.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/log.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/strings.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/strings/decimal_formatter.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/strings/regex.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/term.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/src/time_profiler.cpp">
+			<Option target="toolbox"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/cfg/package_upload.sh">
+			<Option virtualFolder="CMake Files\cfg\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/cfg/toolbox-config.cmake.in">
+			<Option virtualFolder="CMake Files\cfg\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/cfg/toolbox.pc.in">
+			<Option virtualFolder="CMake Files\cfg\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/cfg/toolbox_config.in.h">
+			<Option virtualFolder="CMake Files\cfg\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/cfg/version.in">
+			<Option virtualFolder="CMake Files\cfg\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/modules/FindLinuxPlatform.cmake">
+			<Option virtualFolder="CMake Files\modules\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/modules/SystemDetector.cmake">
+			<Option virtualFolder="CMake Files\modules\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/modules/compilers_flags.cmake">
+			<Option virtualFolder="CMake Files\modules\"/>
+		</Unit>
+		<Unit filename="/home/carlos/development/toolbox/modules/package.cmake">
+			<Option virtualFolder="CMake Files\modules\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

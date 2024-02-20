@@ -1,0 +1,2 @@
+/usr/bin/ar qc lib/libtoolbox.a CMakeFiles/toolbox.dir/src/data/bytes_data.cpp.o CMakeFiles/toolbox.dir/src/data/bytes_buffer.cpp.o CMakeFiles/toolbox.dir/src/data/utils.cpp.o CMakeFiles/toolbox.dir/src/strings.cpp.o CMakeFiles/toolbox.dir/src/strings/regex.cpp.o CMakeFiles/toolbox.dir/src/io.cpp.o CMakeFiles/toolbox.dir/src/strings/decimal_formatter.cpp.o CMakeFiles/toolbox.dir/src/term.cpp.o CMakeFiles/toolbox.dir/src/log.cpp.o CMakeFiles/toolbox.dir/src/time_profiler.cpp.o CMakeFiles/toolbox.dir/src/data/base64.cpp.o
+/usr/bin/ranlib lib/libtoolbox.a

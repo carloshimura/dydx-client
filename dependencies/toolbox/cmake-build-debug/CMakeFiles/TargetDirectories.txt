@@ -1,0 +1,9 @@
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/toolbox.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/package.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/package_source.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/list_install_components.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/install.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/install/local.dir
+/home/carlos/development/toolbox/cmake-build-debug/CMakeFiles/install/strip.dir

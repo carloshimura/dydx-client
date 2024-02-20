@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: toolbox
+Description: Toolbox - C++ helpers, especially for string and bytes handling
+Version: 3.4.0
+Libs: -L${libdir} -ltoolbox
+Cflags: -I${includedir}

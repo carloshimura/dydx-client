@@ -1,6 +1,13 @@
 [requires]
-gtest/1.14.0
+    gtest/1.14.0
+    boost/1.83.0
+    spdlog/1.12.0
+    openssl/3.2.0
+    toolbox/3.4.1
+    bip3x/3.0.0
+    glaze/2.1.0
+    grpc/1.54.3
 
 [generators]
-CMakeDeps
-CMakeToolchain
+    CMakeDeps
+    CMakeToolchain
