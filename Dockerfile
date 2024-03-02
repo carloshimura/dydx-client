@@ -17,14 +17,21 @@ WORKDIR /app/dependencies/toolbox
 RUN conan create . --build=missing -pr=conan_release_pr
 WORKDIR /app/dependencies/bip3x
 RUN conan create . --build=missing -pr=conan_release_pr
-COPY . /app/source
 WORKDIR /app/build
-RUN conan install /app/conanfile.txt --build=missing -pr=conan_release_pr -of /app/build
-RUN cmake -S /app/source -B /app/build -DCMAKE_BUILD_TYPE=Release
+RUN conan install /app/conanfile.txt --build=missing -pr=conan_release_pr -of .
+
+COPY . /app/source
+
+RUN cmake -S /app/source -B /app/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/app/build/conan_toolchain.cmake
 RUN make -j $(nproc --all)
 
 
 FROM ubuntu:latest as runner
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN echo "deb http://cz.archive.ubuntu.com/ubuntu mantic main" | tee /etc/apt/sources.list.d/temporary-repository.list
+RUN apt update && apt install ca-certificates gcc-13 -y
+
 RUN mkdir /app
 COPY --from=builder /app/build/dydx-client /app
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["/app/dydx-client"]

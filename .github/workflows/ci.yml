@@ -1,27 +1,35 @@
 name: C/C++ CI
 
-on:
-  push:
-      branches: [ main ]
-  pull_request:
-      branches: [ main ]
+on: [push]
+
 
 jobs:
   build-and-test:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v3
         - name: install cppunit
-          run: sudo apt install -y gcc-12 python3 cmake
+          run: |
+            echo "deb http://cz.archive.ubuntu.com/ubuntu mantic main" | sudo tee /etc/apt/sources.list.d/temporary-repository.list
+            sudo apt install -y gcc-13 python3 cmake
         - name: install conan
           run: |
-            pip3 install conan===2.0.17 --break-system-packages
-            conan profile autodetect
-        - name: configure
+            pip3 install conan===2.0.17
+            conan profile detect
+        - name: configure and build
           run: |
+            cp conan_release_pr ~/.conan2/profiles/conan_release_pr
+            cd dependencies/toolbox
+            conan create . --build=missing -pr=conan_release_pr
+            cd ../bip3x
+            conan create . --build=missing -pr=conan_release_pr
+            cd ../..
             mkdir build
             cd build
-            conan install ../conanfile.txt --build=missing -of .
+            conan install ../conanfile.txt --build=missing -of . -pr=conan_release_pr
+            cmake -S .. -B .
+            cmake --build --parallel $(nproc --all)
+            mkdir build
+            cd build
+            conan install ../conanfile.txt --build=missing -pr=conan_release_pr -of .
             cmake -S .. -B . -DCMAKE_BUILD_TYPE=Release
-        - name: make
-          run: cmake --build . --target dydx-client -- -j4

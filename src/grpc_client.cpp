@@ -90,9 +90,6 @@ int64_t GRPCClient::getLatestBlockHeight() {
 
     auto rpcResponse = queryBlockStub_->GetLatestBlock(&context, req, &resp);
     if (rpcResponse.ok()) {
-        std::string output;
-        google::protobuf::TextFormat::PrintToString(resp, &output);
-        spdlog::info("Latest block response: {}", output);
         return resp.block().header().height();
     } else {
         spdlog::error("Latest block rpc failed: {}", rpcResponse.error_message());

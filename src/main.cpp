@@ -54,8 +54,8 @@ int main(int argc, char **argv) {
 
     auto tx = createTx(EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET, account, baseAccount, order, 0U);
     auto hash = orderGRPCClient.broadcastTransaction(tx, timeAfterBroadcastNewOrder);
-    auto timeBeforeCancelOrder = std::chrono::high_resolution_clock::now();
 
+    auto timeBeforeCancelOrder = std::chrono::high_resolution_clock::now();
     if (hash) {
         auto cancel =
             generateCancelOrderMessage(baseAccount.address, account.m_sub_account.m_number, shortTermClientID, market.clobPairID, goodTilBlock, false, false);
