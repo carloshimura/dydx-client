@@ -18,7 +18,7 @@ struct MarketInfo {
     uint64_t subticksPerTick;
 };
 
-MarketInfo fromJson(glz::json_t&& json, std::string_view key) {
+MarketInfo fromJson(const glz::json_t& json, std::string_view key) {
     auto marketPair = json["markets"][key];
     return MarketInfo{
         .key = std::string(key),

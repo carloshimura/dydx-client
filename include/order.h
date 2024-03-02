@@ -16,6 +16,41 @@
 
 #include <bip3x/bip3x_crypto.h>
 
+struct order {
+    int baseAsset;
+    int exchangeId;
+    int level;
+    int orderType;
+    bool buy;
+    bool cancelAndCreate;
+    double timestamp;
+    double amount;
+    double price;
+
+    [[nodiscard]] std::string assetToMarket() const {
+        if (baseAsset == 1) return "BTC-USD";
+        if (baseAsset == 2) return "ETH-USD";
+        return "UNKOWN";
+    }
+};
+
+template <>
+struct glz::meta<order> {
+    using T = order;
+    static constexpr auto value = object(
+        &T::baseAsset,
+        &T::exchangeId,
+        &T::level,
+        &T::orderType,
+        &T::buy,
+        &T::cancelAndCreate,
+        &T::timestamp,
+        &T::amount,
+        &T::price
+    );
+};
+
+
 uint64_t calculateQuantums(double size, int32_t atomic_resolution, uint64_t step_base_quantums) {
     auto rawQuantums = size * std::pow(10, -1 * atomic_resolution);
     return std::max(static_cast<uint64_t>(std::round(rawQuantums)), step_base_quantums);

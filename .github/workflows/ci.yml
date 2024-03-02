@@ -16,7 +16,7 @@ jobs:
           run: |
             pip3 install conan===2.0.17
             conan profile detect
-        - name: configure and build
+        - name: configure and build dependencies
           run: |
             cp conan_release_pr ~/.conan2/profiles/conan_release_pr
             cd dependencies/toolbox
@@ -27,9 +27,11 @@ jobs:
             mkdir build
             cd build
             conan install ../conanfile.txt --build=missing -of . -pr=conan_release_pr
+        - name: build the application
+          run: |
             cmake -S .. -B .
             cmake --build --parallel $(nproc --all)
             mkdir build
             cd build
             conan install ../conanfile.txt --build=missing -pr=conan_release_pr -of .
-            cmake -S .. -B . -DCMAKE_BUILD_TYPE=Release
+            cmake -S .. -B . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./conan_toolchain.cmake
