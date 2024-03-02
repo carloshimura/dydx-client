@@ -79,14 +79,14 @@ dydxprotocol::clob::MsgCancelOrder generateCancelOrderMessage(const std::string&
 }
 
 std::string sign(std::string_view message, toolbox::data::bytes_array<32> private_key) {
-    auto start_time_order = std::chrono::high_resolution_clock::now();
+//    auto start_time_order = std::chrono::high_resolution_clock::now();
     std::string result;
     result.resize(64);
     ecdsa_sign(&secp256k1, HASHER_SHA2, reinterpret_cast<const uint8_t *>(private_key.data()), reinterpret_cast<const uint8_t *>(message.data()),
                message.size(), reinterpret_cast<uint8_t *>(result.data()), nullptr, nullptr);
 
-    auto end_time_order = std::chrono::high_resolution_clock::now();
-    spdlog::info("Signature time: {} nanoseconds", std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_order - start_time_order).count() / 1000);
+//    auto end_time_order = std::chrono::high_resolution_clock::now();
+//    spdlog::info("Signature time: {} nanoseconds", std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_order - start_time_order).count() / 1000);
     return result;
 }
 
