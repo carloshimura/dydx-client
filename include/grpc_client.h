@@ -21,7 +21,7 @@ class GRPCClient {
 public:
     explicit GRPCClient(const std::string& address);
     void sendOrder(dydxprotocol::clob::MsgPlaceOrder& msgPlaceOrder);
-    std::optional<std::string> broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, std::chrono::time_point<std::chrono::high_resolution_clock>& aTime);
+    std::optional<std::string> broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, google::protobuf::Arena& arena, std::chrono::time_point<std::chrono::high_resolution_clock>& aTime);
     RemoteAccount queryAccount(const std::string& address);
     int64_t getLatestBlockHeight();
 

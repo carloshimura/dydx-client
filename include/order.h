@@ -28,38 +28,42 @@ struct order {
     double price;
 
     [[nodiscard]] std::string assetToMarket() const {
-        if (baseAsset == 1) return "BTC-USD";
-        if (baseAsset == 2) return "ETH-USD";
+        if (baseAsset == 1)
+            return "BTC-USD";
+        if (baseAsset == 2)
+            return "ETH-USD";
         return "UNKOWN";
     }
 };
 
-template <>
-struct glz::meta<order> {
+template <> struct glz::meta<order> {
     using T = order;
-    static constexpr auto value = object(
-        &T::baseAsset,
-        &T::exchangeId,
-        &T::level,
-        &T::orderType,
-        &T::buy,
-        &T::cancelAndCreate,
-        &T::timestamp,
-        &T::amount,
-        &T::price
-    );
+    static constexpr auto value =
+        object(&T::baseAsset, &T::exchangeId, &T::level, &T::orderType, &T::buy, &T::cancelAndCreate, &T::timestamp, &T::amount, &T::price);
 };
 
+int quick_pow10(int n)
+{
+    static int pow10[10] = {
+        1, 10, 100, 1000, 10000,
+        100000, 1000000, 10000000, 100000000, 1000000000
+    };
+
+    return pow10[n];
+}
 
 uint64_t calculateQuantums(double size, int32_t atomic_resolution, uint64_t step_base_quantums) {
-    auto rawQuantums = size * std::pow(10, -1 * atomic_resolution);
+    int exponent = -1 * atomic_resolution;
+    double pow = exponent < 10 ? quick_pow10(exponent) : std::pow(10, exponent);
+    auto rawQuantums = size * pow;
     return std::max(static_cast<uint64_t>(std::round(rawQuantums)), step_base_quantums);
 }
 
 uint64_t calculateSubticks(double price, int32_t atomic_resolution, int32_t quantum_conversion_exponent, uint64_t subticks_per_tick) {
     static constexpr int32_t quoteQuantumsAtomicResolution = -6;
     auto exponent = atomic_resolution - quantum_conversion_exponent - quoteQuantumsAtomicResolution;
-    auto rawSubticks = price * std::pow(10, exponent);
+    double pow = exponent < 10 ? quick_pow10(exponent) : std::pow(10, exponent);
+    auto rawSubticks = price * pow;
     auto subticks = static_cast<uint64_t>(std::round(rawSubticks));
     return std::max(subticks, subticks_per_tick);
 }
@@ -113,33 +117,28 @@ dydxprotocol::clob::MsgCancelOrder generateCancelOrderMessage(const std::string&
     return cancel_order;
 }
 
-std::string sign(std::string_view message, toolbox::data::bytes_array<32> private_key) {
-//    auto start_time_order = std::chrono::high_resolution_clock::now();
-    std::string result;
-    result.resize(64);
+void sign(const std::string& message, uint8_t* result, toolbox::data::bytes_array<32> private_key, std::chrono::nanoseconds& time) {
+    auto signTimeStart = std::chrono::high_resolution_clock::now();
     ecdsa_sign(&secp256k1, HASHER_SHA2, reinterpret_cast<const uint8_t *>(private_key.data()), reinterpret_cast<const uint8_t *>(message.data()),
-               message.size(), reinterpret_cast<uint8_t *>(result.data()), nullptr, nullptr);
+               message.size(), result, nullptr, nullptr);
 
-//    auto end_time_order = std::chrono::high_resolution_clock::now();
-//    spdlog::info("Signature time: {} nanoseconds", std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_order - start_time_order).count() / 1000);
-    return result;
+    auto signTimeEnd = std::chrono::high_resolution_clock::now();
+    time = std::chrono::duration_cast<std::chrono::nanoseconds>(signTimeEnd - signTimeStart);
 }
 
-void addSignature(cosmos::tx::v1beta1::Tx& tx, const LocalAccount& local_account_info, const RemoteAccount& remote_account) {
-    cosmos::tx::v1beta1::SignDoc sign_doc;
+void addSignature(cosmos::tx::v1beta1::Tx& tx, cosmos::tx::v1beta1::SignDoc& sign_doc, const LocalAccount& local_account_info, const RemoteAccount& remote_account, std::chrono::nanoseconds& aTime) {
     *sign_doc.mutable_body_bytes() = tx.body().SerializeAsString();
     *sign_doc.mutable_auth_info_bytes() = tx.auth_info().SerializeAsString();
     *sign_doc.mutable_chain_id() = EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET.chainId;
     sign_doc.set_account_number(remote_account.number);
-    auto docAsString = sign_doc.SerializeAsString();
-    auto signature = sign(sign_doc.SerializeAsString(), local_account_info.m_private_key);
-    tx.add_signatures(signature.data(), signature.size());
+    uint8_t signature[64]{0};
+    sign(sign_doc.SerializeAsString(), signature, local_account_info.m_private_key, aTime);
+    tx.add_signatures(signature, 64);
 }
 
-cosmos::tx::v1beta1::Tx createTx(const DyDxConfig& exchange_info, const LocalAccount& account_info, const RemoteAccount& remote_account,
-                                 const google::protobuf::Message& message, uint64_t gas_limit) {
-    cosmos::tx::v1beta1::Tx tx;
-    tx.mutable_body()->add_messages()->PackFrom(message, "/");
+void createTx(cosmos::tx::v1beta1::Tx& tx, cosmos::tx::v1beta1::SignDoc& sign_doc, const DyDxConfig& exchange_info, const LocalAccount& account_info, const RemoteAccount& remote_account,
+                                 const google::protobuf::Message& message, uint64_t gas_limit, std::chrono::nanoseconds& aTime) {
+    tx.mutable_body()->mutable_messages(0)->PackFrom(message, "/");
     tx.mutable_auth_info()->mutable_fee()->set_gas_limit(gas_limit);
     auto& amount = *tx.mutable_auth_info()->mutable_fee()->add_amount();
     uint64_t fee = std::ceil(gas_limit * exchange_info.feeMinimumGasPrice);
@@ -154,8 +153,7 @@ cosmos::tx::v1beta1::Tx createTx(const DyDxConfig& exchange_info, const LocalAcc
     signer_info.mutable_mode_info()->mutable_single()->set_mode(cosmos::tx::signing::v1beta1::SIGN_MODE_DIRECT);
     signer_info.set_sequence(remote_account.sequence);
 
-    addSignature(tx, account_info, remote_account);
-    return tx;
+    addSignature(tx, sign_doc, account_info, remote_account, aTime);
 }
 
 #endif // DYDX_CLIENT_ORDER_H

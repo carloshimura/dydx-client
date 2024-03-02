@@ -52,30 +52,20 @@ RemoteAccount GRPCClient::queryAccount(const std::string& address) {
     return RemoteAccount{};
 }
 
-std::optional<std::string> GRPCClient::broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, std::chrono::time_point<std::chrono::high_resolution_clock>& aTime) {
-    cosmos::tx::v1beta1::BroadcastTxRequest txRequest;
-    txRequest.set_mode(cosmos::tx::v1beta1::BROADCAST_MODE_SYNC);
-    txRequest.set_tx_bytes(tx.SerializeAsString());
-    grpc::ClientContext context;
-    cosmos::tx::v1beta1::BroadcastTxResponse resp;
-    grpc::CompletionQueue queue;
-    grpc::Status response;
-    auto responseReader = txStub_->AsyncBroadcastTx(&context, txRequest, &queue);
+std::optional<std::string> GRPCClient::broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, google::protobuf::Arena& arena, std::chrono::time_point<std::chrono::high_resolution_clock>& aTime) {
+    cosmos::tx::v1beta1::BroadcastTxRequest* txRequest = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::BroadcastTxRequest>(&arena);
+    txRequest->set_mode(cosmos::tx::v1beta1::BROADCAST_MODE_SYNC);
+    txRequest->set_tx_bytes(tx.SerializeAsString());
     aTime = std::chrono::high_resolution_clock::now();
-    responseReader->Finish(&resp, &response, (void *)1);
-    void *got_tag;
-    bool ok = false;
-    queue.Next(&got_tag, &ok);
-    if (ok && got_tag != (void *)1) {
-        // check reply and status
-        spdlog::error("Something very weird!");
-    }
+    grpc::ClientContext context_;
+    cosmos::tx::v1beta1::BroadcastTxResponse* resp = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::BroadcastTxResponse>(&arena);
+    auto response = txStub_->BroadcastTx(&context_, *txRequest, resp);
     if (response.ok()) {
         std::string output;
-        google::protobuf::TextFormat::PrintToString(resp, &output);
+        google::protobuf::TextFormat::PrintToString(*resp, &output);
         spdlog::info("Broadcast transaction: {}", output);
-        if (resp.has_tx_response()) {
-            return resp.tx_response().txhash();
+        if (resp->has_tx_response()) {
+            return resp->tx_response().txhash();
         }
     } else {
         spdlog::error("BroadcastTx rpc failed: {}", response.error_message());
