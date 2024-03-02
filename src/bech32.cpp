@@ -6,22 +6,18 @@
 #include <vector>
 
 #include <array>
-#include <assert.h>
+#include <cassert>
 #include <numeric>
 #include <optional>
 
-namespace bech32
-{
+namespace bech32 {
 
-namespace
-{
+namespace {
 
 /** Concatenate two vectors. */
-template<typename V>
-inline V Cat(V v1, const V &v2)
-{
+template <typename V> inline V Cat(V v1, const V& v2) {
     v1.reserve(v1.size() + v2.size());
-    for (const auto &arg: v2) {
+    for (const auto& arg : v2) {
         v1.push_back(arg);
     }
     return v1;
@@ -30,19 +26,14 @@ inline V Cat(V v1, const V &v2)
 typedef std::vector<uint8_t> data;
 
 /** The Bech32 and Bech32m character set for encoding. */
-const char* CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+const char *CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
 /** The Bech32 and Bech32m character set for decoding. */
-const int8_t CHARSET_REV[128] = {
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    15, -1, 10, 17, 21, 20, 26, 30,  7,  5, -1, -1, -1, -1, -1, -1,
-    -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
-    1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1,
-    -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
-    1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
-};
+const int8_t CHARSET_REV[128] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, -1, 10, 17,
+                                 21, 20, 26, 30, 7,  5,  -1, -1, -1, -1, -1, -1, -1, 29, -1, 24, 13, 25, 9,  8,  23, -1, 18, 22, 31, 27,
+                                 19, -1, 1,  0,  3,  16, 11, 28, 12, 14, 6,  4,  2,  -1, -1, -1, -1, -1, -1, 29, -1, 24, 13, 25, 9,  8,
+                                 23, -1, 18, 22, 31, 27, 19, -1, 1,  0,  3,  16, 11, 28, 12, 14, 6,  4,  2,  -1, -1, -1, -1, -1};
 
 /** We work with the finite field GF(1024) defined as a degree 2 extension of the base field GF(32)
  * The defining polynomial of the extension is x^2 + 9x + 23.
@@ -53,8 +44,7 @@ const int8_t CHARSET_REV[128] = {
  * Conversely, GF1024_LOG contains the discrete logarithms of these powers, so
  * GF1024_LOG[GF1024_EXP[k]] == k.
  * The following function generates the two tables GF1024_EXP and GF1024_LOG as constexprs. */
-constexpr std::pair<std::array<int16_t, 1023>, std::array<int16_t, 1024>> GenerateGFTables()
-{
+constexpr std::pair<std::array<int16_t, 1023>, std::array<int16_t, 1024>> GenerateGFTables() {
     // Build table for GF(32).
     // We use these tables to perform arithmetic in GF(32) below, when constructing the
     // tables for GF(1024).
@@ -80,7 +70,8 @@ constexpr std::pair<std::array<int16_t, 1023>, std::array<int16_t, 1024>> Genera
         // If the polynomial now has an x^5 term, we subtract fmod from it
         // to remain working modulo fmod. Subtraction is the same as XOR in characteristic
         // 2 fields.
-        if (v & 32) v ^= fmod;
+        if (v & 32)
+            v ^= fmod;
         GF32_EXP[i] = v;
         GF32_LOG[v] = i;
     }
@@ -137,8 +128,7 @@ uint32_t EncodingConstant(Encoding encoding) {
 /** This function will compute what 6 5-bit values to XOR into the last 6 input values, in order to
  *  make the checksum 0. These 6 values are packed together in a single 30-bit integer. The higher
  *  bits correspond to earlier values. */
-uint32_t PolyMod(const data& v)
-{
+uint32_t PolyMod(const data& v) {
     // The input is interpreted as a list of coefficients of a polynomial over F = GF(32), with an
     // implicit 1 in front. If the input is [v0,v1,v2,v3,v4], that polynomial is v(x) =
     // 1*x^5 + v0*x^4 + v1*x^3 + v2*x^2 + v3*x + v4. The implicit 1 guarantees that
@@ -215,12 +205,16 @@ uint32_t PolyMod(const data& v)
         //         v = v*32 + coef.integer_representation()
         //     print("0x%x" % v)
         //
-        if (c0 & 1)  c ^= 0x3b6a57b2; //     k(x) = {29}x^5 + {22}x^4 + {20}x^3 + {21}x^2 + {29}x + {18}
-        if (c0 & 2)  c ^= 0x26508e6d; //  {2}k(x) = {19}x^5 +  {5}x^4 +     x^3 +  {3}x^2 + {19}x + {13}
-        if (c0 & 4)  c ^= 0x1ea119fa; //  {4}k(x) = {15}x^5 + {10}x^4 +  {2}x^3 +  {6}x^2 + {15}x + {26}
-        if (c0 & 8)  c ^= 0x3d4233dd; //  {8}k(x) = {30}x^5 + {20}x^4 +  {4}x^3 + {12}x^2 + {30}x + {29}
-        if (c0 & 16) c ^= 0x2a1462b3; // {16}k(x) = {21}x^5 +     x^4 +  {8}x^3 + {24}x^2 + {21}x + {19}
-
+        if (c0 & 1)
+            c ^= 0x3b6a57b2; //     k(x) = {29}x^5 + {22}x^4 + {20}x^3 + {21}x^2 + {29}x + {18}
+        if (c0 & 2)
+            c ^= 0x26508e6d; //  {2}k(x) = {19}x^5 +  {5}x^4 +     x^3 +  {3}x^2 + {19}x + {13}
+        if (c0 & 4)
+            c ^= 0x1ea119fa; //  {4}k(x) = {15}x^5 + {10}x^4 +  {2}x^3 +  {6}x^2 + {15}x + {26}
+        if (c0 & 8)
+            c ^= 0x3d4233dd; //  {8}k(x) = {30}x^5 + {20}x^4 +  {4}x^3 + {12}x^2 + {30}x + {29}
+        if (c0 & 16)
+            c ^= 0x2a1462b3; // {16}k(x) = {21}x^5 +     x^4 +  {8}x^3 + {24}x^2 + {21}x + {19}
     }
     return c;
 }
@@ -252,11 +246,11 @@ constexpr std::array<uint32_t, 25> GenerateSyndromeConstants() {
     for (int k = 1; k < 6; ++k) {
         for (int shift = 0; shift < 5; ++shift) {
             int16_t b = GF1024_LOG.at(size_t{1} << shift);
-            int16_t c0 = GF1024_EXP.at((997*k + b) % 1023);
-            int16_t c1 = GF1024_EXP.at((998*k + b) % 1023);
-            int16_t c2 = GF1024_EXP.at((999*k + b) % 1023);
+            int16_t c0 = GF1024_EXP.at((997 * k + b) % 1023);
+            int16_t c1 = GF1024_EXP.at((998 * k + b) % 1023);
+            int16_t c2 = GF1024_EXP.at((999 * k + b) % 1023);
             uint32_t c = c2 << 20 | c1 << 10 | c0;
-            int ind = 5*(k-1) + shift;
+            int ind = 5 * (k - 1) + shift;
             SYNDROME_CONSTS[ind] = c;
         }
     }
@@ -282,20 +276,16 @@ uint32_t Syndrome(const uint32_t residue) {
     // GF1024_EXP above). In this way, we compute all three values of s_j for j in (997, 998, 999)
     // simultaneously. Recall that XOR corresponds to addition in a characteristic 2 field.
     for (int i = 0; i < 25; ++i) {
-        result ^= ((residue >> (5+i)) & 1 ? SYNDROME_CONSTS.at(i) : 0);
+        result ^= ((residue >> (5 + i)) & 1 ? SYNDROME_CONSTS.at(i) : 0);
     }
     return result;
 }
 
 /** Convert to lower case. */
-inline unsigned char LowerCase(unsigned char c)
-{
-    return (c >= 'A' && c <= 'Z') ? (c - 'A') + 'a' : c;
-}
+inline unsigned char LowerCase(unsigned char c) { return (c >= 'A' && c <= 'Z') ? (c - 'A') + 'a' : c; }
 
 /** Return indices of invalid characters in a Bech32 string. */
-bool CheckCharacters(const std::string& str, std::vector<int>& errors)
-{
+bool CheckCharacters(const std::string& str, std::vector<int>& errors) {
     bool lower = false, upper = false;
     for (size_t i = 0; i < str.size(); ++i) {
         unsigned char c{(unsigned char)(str[i])};
@@ -319,8 +309,7 @@ bool CheckCharacters(const std::string& str, std::vector<int>& errors)
 }
 
 /** Expand a HRP for use in checksum computation. */
-data ExpandHRP(const std::string& hrp)
-{
+data ExpandHRP(const std::string& hrp) {
     data ret;
     ret.reserve(hrp.size() + 90);
     ret.resize(hrp.size() * 2 + 1);
@@ -334,24 +323,24 @@ data ExpandHRP(const std::string& hrp)
 }
 
 /** Verify a checksum. */
-Encoding VerifyChecksum(const std::string& hrp, const data& values)
-{
+Encoding VerifyChecksum(const std::string& hrp, const data& values) {
     // PolyMod computes what value to xor into the final values to make the checksum 0. However,
     // if we required that the checksum was 0, it would be the case that appending a 0 to a valid
     // list of values would result in a new valid list. For that reason, Bech32 requires the
     // resulting checksum to be 1 instead. In Bech32m, this constant was amended. See
     // https://gist.github.com/sipa/14c248c288c3880a3b191f978a34508e for details.
     const uint32_t check = PolyMod(Cat(ExpandHRP(hrp), values));
-    if (check == EncodingConstant(Encoding::BECH32)) return Encoding::BECH32;
-    if (check == EncodingConstant(Encoding::BECH32M)) return Encoding::BECH32M;
+    if (check == EncodingConstant(Encoding::BECH32))
+        return Encoding::BECH32;
+    if (check == EncodingConstant(Encoding::BECH32M))
+        return Encoding::BECH32M;
     return Encoding::INVALID;
 }
 
 /** Create a checksum. */
-data CreateChecksum(Encoding encoding, const std::string& hrp, const data& values)
-{
+data CreateChecksum(Encoding encoding, const std::string& hrp, const data& values) {
     data enc = Cat(ExpandHRP(hrp), values);
-    enc.resize(enc.size() + 6); // Append 6 zeroes
+    enc.resize(enc.size() + 6);                               // Append 6 zeroes
     uint32_t mod = PolyMod(enc) ^ EncodingConstant(encoding); // Determine what to XOR into those 6 zeroes.
     data ret(6);
     for (size_t i = 0; i < 6; ++i) {
@@ -368,7 +357,8 @@ std::string Encode(Encoding encoding, const std::string& hrp, const data& values
     // First ensure that the HRP is all lowercase. BIP-173 and BIP350 require an encoder
     // to return a lowercase Bech32/Bech32m string, but if given an uppercase HRP, the
     // result will always be invalid.
-    for (const char& c : hrp) assert(c < 'A' || c > 'Z');
+    for (const char& c : hrp)
+        assert(c < 'A' || c > 'Z');
     data checksum = CreateChecksum(encoding, hrp, values);
     data combined = Cat(values, checksum);
     std::string ret = hrp + '1';
@@ -382,7 +372,8 @@ std::string Encode(Encoding encoding, const std::string& hrp, const data& values
 /** Decode a Bech32 or Bech32m string. */
 DecodeResult Decode(const std::string& str) {
     std::vector<int> errors;
-    if (!CheckCharacters(str, errors)) return {};
+    if (!CheckCharacters(str, errors))
+        return {};
     size_t pos = str.rfind('1');
     if (str.size() > 90 || pos == str.npos || pos == 0 || pos + 7 > str.size()) {
         return {};
@@ -402,7 +393,8 @@ DecodeResult Decode(const std::string& str) {
         hrp += LowerCase(str[i]);
     }
     Encoding result = VerifyChecksum(hrp, values);
-    if (result == Encoding::INVALID) return {};
+    if (result == Encoding::INVALID)
+        return {};
     return {result, std::move(hrp), data(values.begin(), values.end() - 6)};
 }
 
@@ -416,7 +408,7 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str) {
         return std::make_pair("Bech32 string too long", std::move(error_locations));
     }
 
-    if (!CheckCharacters(str, error_locations)){
+    if (!CheckCharacters(str, error_locations)) {
         return std::make_pair("Invalid character or mixed case", std::move(error_locations));
     }
 
@@ -506,13 +498,15 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str) {
                     //          = e2*(e)^(998*p2) ((e)^p2 + (e)^p1)
                     //
                     int s2_s1p1 = s2 ^ (s1 == 0 ? 0 : GF1024_EXP.at((l_s1 + p1) % 1023));
-                    if (s2_s1p1 == 0) continue;
+                    if (s2_s1p1 == 0)
+                        continue;
                     int l_s2_s1p1 = GF1024_LOG.at(s2_s1p1);
 
                     // Similarly, s1 + s0*(e)^p1
                     //          = e2*(e)^(997*p2) ((e)^p2 + (e)^p1)
                     int s1_s0p1 = s1 ^ (s0 == 0 ? 0 : GF1024_EXP.at((l_s0 + p1) % 1023));
-                    if (s1_s0p1 == 0) continue;
+                    if (s1_s0p1 == 0)
+                        continue;
                     int l_s1_s0p1 = GF1024_LOG.at(s1_s0p1);
 
                     // So, putting these together, we can compute the second error position as
@@ -521,13 +515,15 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str) {
                     size_t p2 = (l_s2_s1p1 - l_s1_s0p1 + 1023) % 1023;
 
                     // Sanity checks that p2 is a valid position and not the same as p1
-                    if (p2 >= length || p1 == p2) continue;
+                    if (p2 >= length || p1 == p2)
+                        continue;
 
                     // Now we want to compute the error values e1 and e2.
                     // Similar to above, we compute s1 + s0*(e)^p2
                     //          = e1*(e)^(997*p1) ((e)^p1 + (e)^p2)
                     int s1_s0p2 = s1 ^ (s0 == 0 ? 0 : GF1024_EXP.at((l_s0 + p2) % 1023));
-                    if (s1_s0p2 == 0) continue;
+                    if (s1_s0p2 == 0)
+                        continue;
                     int l_s1_s0p2 = GF1024_LOG.at(s1_s0p2);
 
                     // And compute (the log of) 1/((e)^p1 + (e)^p2))
@@ -538,14 +534,16 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str) {
                     // Then recover e2 by dividing by (e)^(997*p2)
                     int l_e2 = l_s1_s0p1 + inv_p1_p2 + (1023 - 997) * p2;
                     // Check that e2 is in GF(32)
-                    if (l_e2 % 33) continue;
+                    if (l_e2 % 33)
+                        continue;
 
                     // In the same way, (s1 + s0*(e)^p2) * (1/((e)^p1 + (e)^p2)))
                     //         = e1*(e)^(997*p1)
                     // So recover e1 by dividing by (e)^(997*p1)
                     int l_e1 = l_s1_s0p2 + inv_p1_p2 + (1023 - 997) * p1;
                     // Check that e1 is in GF(32)
-                    if (l_e1 % 33) continue;
+                    if (l_e1 % 33)
+                        continue;
 
                     // Again, we do not return e1 or e2 for safety.
                     // Order the error positions from the left of the string and return them
@@ -566,10 +564,11 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str) {
 
         if (error_locations.empty() || (!possible_errors.empty() && possible_errors.size() < error_locations.size())) {
             error_locations = std::move(possible_errors);
-            if (!error_locations.empty()) error_encoding = encoding;
+            if (!error_locations.empty())
+                error_encoding = encoding;
         }
     }
-    std::string error_message = error_encoding == Encoding::BECH32M ? "Invalid Bech32m checksum"
+    std::string error_message = error_encoding == Encoding::BECH32M  ? "Invalid Bech32m checksum"
                                 : error_encoding == Encoding::BECH32 ? "Invalid Bech32 checksum"
                                                                      : "Invalid checksum";
 

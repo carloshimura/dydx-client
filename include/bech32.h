@@ -9,12 +9,10 @@
 #include <string>
 #include <vector>
 
-namespace bech32
-{
+namespace bech32 {
 
 enum class Encoding {
     INVALID, //!< Failed decoding
-
     BECH32,  //!< Bech32 encoding as defined in BIP173
     BECH32M, //!< Bech32m encoding as defined in BIP350
 };
@@ -23,8 +21,7 @@ enum class Encoding {
  *  assertion error. Encoding must be one of BECH32 or BECH32M. */
 std::string Encode(Encoding encoding, const std::string& hrp, const std::vector<uint8_t>& values);
 
-struct DecodeResult
-{
+struct DecodeResult {
     Encoding encoding;         //!< What encoding was detected in the result; Encoding::INVALID if failed.
     std::string hrp;           //!< The human readable part
     std::vector<uint8_t> data; //!< The payload (excluding checksum)
