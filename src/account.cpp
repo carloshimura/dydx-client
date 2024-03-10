@@ -35,20 +35,28 @@ BytesVec to_5bits(const BytesVec& bytes) {
     return result;
 }
 
-LocalAccount accountFromMnemonic(std::string mnemonic, uint32_t subaccount_number) {
+LocalAccount accountFromMnemonic(std::string mnemonic, uint32_t subAccountNumber) {
     const bip3x::bytes_64 seed = bip3x::bip3x_hdkey_encoder::make_bip39_seed(mnemonic);
     bip3x::hdkey key = bip3x::bip3x_hdkey_encoder::make_bip32_root_key(seed);
     bip3x::bip3x_hdkey_encoder::extend_key(key, BIP44_DERIVATION_PATH);
     auto fingerprint = calc_fingerprint(key);
     auto address = bech32::Encode(bech32::Encoding::BECH32, BECH32_PREFIX, to_5bits(fingerprint));
-    return LocalAccount{
+    auto account = LocalAccount{
         .m_sub_account =
             LocalAccount::SubAccount{
                 .m_address = std::move(address),
-                .m_number = subaccount_number,
+                .m_number = subAccountNumber,
             },
         .m_mnemonic = std::move(mnemonic),
-        .m_public_key = key.public_key.get(),
-        .m_private_key = key.private_key.get(),
+        .m_public_key = {},
+        .m_private_key = {},
     };
+    std::copy(key.public_key.begin(), key.public_key.end(), account.m_public_key.begin());
+    std::copy(key.private_key.begin(), key.private_key.end(), account.m_private_key.begin());
+
+    return account;
 }
+
+/*Address = dydx1328sh6ksrj02w42d4r3jcwtlvmyh5t03ng8fzv
+Pub key is = AymPQ88c0XtYWfxWS55IVKU/0wF9jXBSCb0oFDwBZbQT
+Priv key is = ZKK2RzgXvQe8Gzy5IPmKtH5zN2DLNJ1hHGZrbhHS3bw=*/

@@ -5,8 +5,8 @@
 #ifndef DYDX_CLIENT_DYDX_CONFIG_H
 #define DYDX_CLIENT_DYDX_CONFIG_H
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 struct DyDxConfig {
     std::string chainId;
@@ -15,8 +15,6 @@ struct DyDxConfig {
 };
 
 inline const std::string NETWORK_ID_TESTNET = "dydx-testnet-4";
-inline const DyDxConfig EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET {
-    .chainId = NETWORK_ID_TESTNET, .feeMinimumGasPrice = 40000000000, .feeDenom = "adv4tnt"
-};
+inline const DyDxConfig EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET{.chainId = NETWORK_ID_TESTNET, .feeMinimumGasPrice = 40000000000, .feeDenom = "adv4tnt"};
 
 #endif // DYDX_CLIENT_DYDX_CONFIG_H

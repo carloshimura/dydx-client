@@ -11,10 +11,9 @@
 #include <spdlog/spdlog.h>
 
 GRPCClient::GRPCClient(const std::string& address)
-    : options{}, credentials(grpc::SslCredentials(options)), stub_(dydxprotocol::clob::Msg::NewStub(grpc::CreateChannel(address, credentials))),
-      txStub_(cosmos::tx::v1beta1::TxService::NewStub(grpc::CreateChannel(address, credentials))),
-      queryStub_(cosmos::auth::v1beta1::Query::NewStub(grpc::CreateChannel(address, credentials))),
-      queryBlockStub_(cosmos::base::tendermint::v1beta1::QueryService::NewStub(grpc::CreateChannel(address, credentials))) {}
+    : options{}, credentials(grpc::SslCredentials(options)), channel_(grpc::CreateChannel(address, credentials)),
+      stub_(dydxprotocol::clob::Msg::NewStub(channel_)), txStub_(cosmos::tx::v1beta1::TxService::NewStub(channel_)),
+      queryStub_(cosmos::auth::v1beta1::Query::NewStub(channel_)), queryBlockStub_(cosmos::base::tendermint::v1beta1::QueryService::NewStub(channel_)) {}
 
 void GRPCClient::sendOrder(dydxprotocol::clob::MsgPlaceOrder& msgPlaceOrder) {
     grpc::ClientContext context;
@@ -39,7 +38,7 @@ RemoteAccount GRPCClient::queryAccount(const std::string& address) {
     if (rpcResponse.ok()) {
         std::string output;
         google::protobuf::TextFormat::PrintToString(resp, &output);
-        spdlog::info("Account response: {}", output);
+        // spdlog::info("Account response: {}", output);
         if (resp.account().Is<cosmos::auth::v1beta1::BaseAccount>()) {
             cosmos::auth::v1beta1::BaseAccount baseAccount;
             resp.account().UnpackTo(&baseAccount);
@@ -52,11 +51,10 @@ RemoteAccount GRPCClient::queryAccount(const std::string& address) {
     return RemoteAccount{};
 }
 
-std::optional<std::string> GRPCClient::broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, google::protobuf::Arena& arena, std::chrono::time_point<std::chrono::high_resolution_clock>& aTime) {
+std::optional<std::string> GRPCClient::broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, google::protobuf::Arena& arena) {
     cosmos::tx::v1beta1::BroadcastTxRequest* txRequest = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::BroadcastTxRequest>(&arena);
     txRequest->set_mode(cosmos::tx::v1beta1::BROADCAST_MODE_SYNC);
     txRequest->set_tx_bytes(tx.SerializeAsString());
-    aTime = std::chrono::high_resolution_clock::now();
     grpc::ClientContext context_;
     cosmos::tx::v1beta1::BroadcastTxResponse* resp = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::BroadcastTxResponse>(&arena);
     auto response = txStub_->BroadcastTx(&context_, *txRequest, resp);

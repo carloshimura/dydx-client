@@ -14,9 +14,12 @@
 #include "dydxprotocol/clob/order.pb.h"
 #include "dydxprotocol/clob/tx.pb.h"
 
-#include <bip3x/bip3x_crypto.h>
+#include "account.h"
+#include "secp256k1.h"
 
-struct order {
+#include <glaze/glaze.hpp>
+
+struct Order {
     int baseAsset;
     int exchangeId;
     int level;
@@ -36,124 +39,49 @@ struct order {
     }
 };
 
-template <> struct glz::meta<order> {
-    using T = order;
+template <> struct glz::meta<Order> {
+    using T = Order;
     static constexpr auto value =
         object(&T::baseAsset, &T::exchangeId, &T::level, &T::orderType, &T::buy, &T::cancelAndCreate, &T::timestamp, &T::amount, &T::price);
 };
 
-int quick_pow10(int n)
-{
-    static int pow10[10] = {
-        1, 10, 100, 1000, 10000,
-        100000, 1000000, 10000000, 100000000, 1000000000
-    };
+uint64_t calculateQuantums(double size, int32_t atomic_resolution, uint64_t step_base_quantums);
 
-    return pow10[n];
-}
-
-uint64_t calculateQuantums(double size, int32_t atomic_resolution, uint64_t step_base_quantums) {
-    int exponent = -1 * atomic_resolution;
-    double pow = exponent < 10 ? quick_pow10(exponent) : std::pow(10, exponent);
-    auto rawQuantums = size * pow;
-    return std::max(static_cast<uint64_t>(std::round(rawQuantums)), step_base_quantums);
-}
-
-uint64_t calculateSubticks(double price, int32_t atomic_resolution, int32_t quantum_conversion_exponent, uint64_t subticks_per_tick) {
-    static constexpr int32_t quoteQuantumsAtomicResolution = -6;
-    auto exponent = atomic_resolution - quantum_conversion_exponent - quoteQuantumsAtomicResolution;
-    double pow = exponent < 10 ? quick_pow10(exponent) : std::pow(10, exponent);
-    auto rawSubticks = price * pow;
-    auto subticks = static_cast<uint64_t>(std::round(rawSubticks));
-    return std::max(subticks, subticks_per_tick);
-}
+uint64_t calculateSubticks(double price, int32_t atomic_resolution, int32_t quantum_conversion_exponent, uint64_t subticks_per_tick);
 
 dydxprotocol::clob::MsgPlaceOrder generatePlaceOrderMessage(const std::string& address, uint32_t subaccount_number, uint32_t order_cid, uint32_t clob_pair_id,
                                                             dydxprotocol::clob::Order_Side side, dydxprotocol::clob::Order_TimeInForce time_in_force,
                                                             uint64_t quantums, uint64_t subticks, uint32_t good_till,
                                                             dydxprotocol::clob::Order_ConditionType condition_type, uint64_t condition_order_trigger_subticks,
-                                                            bool reduce_only, bool long_term, uint32_t client_metadata) {
-    dydxprotocol::clob::MsgPlaceOrder place_order;
-    dydxprotocol::clob::Order& order = *place_order.mutable_order();
-    dydxprotocol::clob::OrderId& order_id = *order.mutable_order_id();
-    dydxprotocol::subaccounts::SubaccountId& subaccount_id = *order_id.mutable_subaccount_id();
-    *subaccount_id.mutable_owner() = address;
-    subaccount_id.set_number(subaccount_number);
-    order_id.set_client_id(order_cid);
-
-    order_id.set_order_flags(condition_type == dydxprotocol::clob::Order_ConditionType_CONDITION_TYPE_UNSPECIFIED ? (long_term ? 64 : 0) : 32);
-    order_id.set_clob_pair_id(clob_pair_id);
-    order.set_side(side);
-    order.set_quantums(quantums);
-    order.set_subticks(subticks);
-    if (long_term) {
-        order.set_good_til_block_time(good_till);
-    } else {
-        order.set_good_til_block(good_till);
-    }
-    order.set_time_in_force(time_in_force);
-    order.set_reduce_only(reduce_only);
-    order.set_client_metadata(client_metadata);
-    order.set_condition_type(condition_type);
-    order.set_conditional_order_trigger_subticks(condition_order_trigger_subticks);
-    return place_order;
-}
+                                                            bool reduce_only, bool long_term, uint32_t client_metadata);
 
 dydxprotocol::clob::MsgCancelOrder generateCancelOrderMessage(const std::string& address, uint32_t subaccount_number, uint32_t order_cid, uint32_t clob_pair_id,
-                                                              uint32_t good_till, bool conditional, bool long_term) {
-    dydxprotocol::clob::MsgCancelOrder cancel_order;
-    dydxprotocol::clob::OrderId& order_id = *cancel_order.mutable_order_id();
-    dydxprotocol::subaccounts::SubaccountId& subaccount_id = *order_id.mutable_subaccount_id();
-    *subaccount_id.mutable_owner() = address;
-    subaccount_id.set_number(subaccount_number);
-    order_id.set_client_id(order_cid);
-    order_id.set_order_flags(conditional ? 32 : (long_term ? 64 : 0));
-    order_id.set_clob_pair_id(clob_pair_id);
-    if (long_term) {
-        cancel_order.set_good_til_block_time(good_till);
-    } else {
-        cancel_order.set_good_til_block(good_till);
-    }
-    return cancel_order;
-}
+                                                              uint32_t good_till, bool conditional, bool long_term);
 
-void sign(const std::string& message, uint8_t* result, toolbox::data::bytes_array<32> private_key, std::chrono::nanoseconds& time) {
-    auto signTimeStart = std::chrono::high_resolution_clock::now();
-    ecdsa_sign(&secp256k1, HASHER_SHA2, reinterpret_cast<const uint8_t *>(private_key.data()), reinterpret_cast<const uint8_t *>(message.data()),
-               message.size(), result, nullptr, nullptr);
+// void sign(const uint8_t* message, size_t size,  uint8_t* result, const LocalAccount& account_info, std::chrono::nanoseconds& time) {
+//     ecdsa_sign(&secp256k1, HASHER_SHA2, reinterpret_cast<const uint8_t *>(account_info.m_private_key.data()), reinterpret_cast<const uint8_t *>(message),
+//                size, result, nullptr, nullptr);
+// }
+//
+// void addSignature(cosmos::tx::v1beta1::Tx& tx, cosmos::tx::v1beta1::SignDoc& sign_doc, const LocalAccount& local_account_info, const RemoteAccount&
+// remote_account, std::chrono::nanoseconds& aTime) {
+//     *sign_doc.mutable_body_bytes() = tx.body().SerializeAsString();
+//     *sign_doc.mutable_auth_info_bytes() = tx.auth_info().SerializeAsString();
+//     *sign_doc.mutable_chain_id() = EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET.chainId;
+//     sign_doc.set_account_number(remote_account.number);
+//     uint8_t signature[64]{0};
+//     std::size_t byteSize = sign_doc.ByteSizeLong();
+//     uint8_t bytes[byteSize];
+//     sign_doc.SerializeToArray(bytes, byteSize);
+//     sign(bytes, byteSize, signature, local_account_info, aTime);
+//     tx.add_signatures(signature, 64);
+// }
 
-    auto signTimeEnd = std::chrono::high_resolution_clock::now();
-    time = std::chrono::duration_cast<std::chrono::nanoseconds>(signTimeEnd - signTimeStart);
-}
-
-void addSignature(cosmos::tx::v1beta1::Tx& tx, cosmos::tx::v1beta1::SignDoc& sign_doc, const LocalAccount& local_account_info, const RemoteAccount& remote_account, std::chrono::nanoseconds& aTime) {
-    *sign_doc.mutable_body_bytes() = tx.body().SerializeAsString();
-    *sign_doc.mutable_auth_info_bytes() = tx.auth_info().SerializeAsString();
-    *sign_doc.mutable_chain_id() = EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET.chainId;
-    sign_doc.set_account_number(remote_account.number);
-    uint8_t signature[64]{0};
-    sign(sign_doc.SerializeAsString(), signature, local_account_info.m_private_key, aTime);
-    tx.add_signatures(signature, 64);
-}
-
-void createTx(cosmos::tx::v1beta1::Tx& tx, cosmos::tx::v1beta1::SignDoc& sign_doc, const DyDxConfig& exchange_info, const LocalAccount& account_info, const RemoteAccount& remote_account,
-                                 const google::protobuf::Message& message, uint64_t gas_limit, std::chrono::nanoseconds& aTime) {
-    tx.mutable_body()->mutable_messages(0)->PackFrom(message, "/");
-    tx.mutable_auth_info()->mutable_fee()->set_gas_limit(gas_limit);
-    auto& amount = *tx.mutable_auth_info()->mutable_fee()->add_amount();
-    uint64_t fee = std::ceil(gas_limit * exchange_info.feeMinimumGasPrice);
-    *amount.mutable_amount() = std::to_string(fee);
-    *amount.mutable_denom() = exchange_info.feeDenom;
-    auto& signer_info = *tx.mutable_auth_info()->add_signer_infos();
-    cosmos::crypto::secp256k1::PubKey pub_key;
-    const auto& pub_key_bytes = account_info.m_public_key;
-    std::string const pub_key_string(pub_key_bytes.data(), pub_key_bytes.data() + pub_key_bytes.size());
-    *pub_key.mutable_key() = pub_key_string;
-    signer_info.mutable_public_key()->PackFrom(pub_key, "/");
-    signer_info.mutable_mode_info()->mutable_single()->set_mode(cosmos::tx::signing::v1beta1::SIGN_MODE_DIRECT);
-    signer_info.set_sequence(remote_account.sequence);
-
-    addSignature(tx, sign_doc, account_info, remote_account, aTime);
-}
+void createTx(cosmos::tx::v1beta1::Tx& tx, cosmos::tx::v1beta1::SignDoc& signDoc, const DyDxConfig& exchange_info, const LocalAccount& accountInfo,
+              const RemoteAccount& remoteAccount, const google::protobuf::Message& message, uint64_t gas_limit);
+void addSignature(LocalAccount& localAccount, secp256k1_ecdsa_signature& signature, const secp256k1_context* signContext, cosmos::tx::v1beta1::Tx* tx,
+                  size_t byteSize, const uint8_t* txSerialized);
+void setOrderAndSign(const secp256k1_context* ctx, const RemoteAccount& remoteAccount, cosmos::tx::v1beta1::Tx* tx, cosmos::tx::v1beta1::SignDoc* txSign,
+                     const google::protobuf::Message& orderMessage, LocalAccount& localAccount, secp256k1_ecdsa_signature& sig);
 
 #endif // DYDX_CLIENT_ORDER_H

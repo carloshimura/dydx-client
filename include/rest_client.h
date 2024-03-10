@@ -26,11 +26,11 @@ namespace ssl = net::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 class RestClient {
-  private:
+private:
     std::string host;
     std::string port;
 
-  public:
+public:
     RestClient(std::string_view host, std::string_view port) : host(host), port(port) {}
 
     glz::json_t sendGetRequestAndWaitForResponse(std::string_view target) {
@@ -68,7 +68,7 @@ class RestClient {
         http::request<http::string_body> req{http::verb::get, target, 11};
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-//        req.set(http::field::content_type, "application/json");
+        //        req.set(http::field::content_type, "application/json");
 
         // Send the HTTP request to the remote host
         http::write(stream, req);
@@ -103,7 +103,7 @@ class RestClient {
 
         glz::json_t json{};
         auto string_response = beast::buffers_to_string(res.body().data());
-        spdlog::info("String message: {}", string_response);
+        //        spdlog::info("String message: {}", string_response);
         auto result = glz::read_json(json, string_response);
         if (result) {
             spdlog::error("Unable to parse response: {}", string_response);

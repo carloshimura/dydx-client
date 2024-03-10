@@ -6,115 +6,128 @@
 #include "order.h"
 #include "rest_client.h"
 
+#include <benchmark/benchmark.h>
 #include <boost/container/flat_map.hpp>
 #include <google/protobuf/text_format.h>
 
 #include <random>
 
-static constexpr auto numberOfOrders = 100U;
+#include <sys/random.h>
 
-int main(int argc, char **argv) {
-    spdlog::set_pattern("[%H:%M:%S.%F] %v");
-    if (argc < 2) {
-        spdlog::error("Invalid number of arguments");
+int fillRandom(unsigned char* data, size_t size) {
+    /* If `getrandom(2)` is not available you should fall back to /dev/urandom */
+    ssize_t res = getrandom(data, size, 0);
+    if (res < 0 || (size_t)res != size) {
+        return 0;
     }
-    // example of json as terminal argument: {\"baseAsset\":2, \"exchangeId\":81, \"level\":1, \"orderType\":1, \"buy\":true, \"cancelAndCreate\":true, \"timestamp\":1709203259489729929, \"amount\":0.576, \"price\":3475.1}
-    std::string full_arg;
-    for (int i = 1; i < argc; ++i) {
-        full_arg.append(argv[i]);
-    }
+    return 1;
 
-    static const std::string dydxV4Mnemonic =
-        "night scan essay distance just royal regret mind various blast swap exit myth raw expire insane slot ranch lock sun wild bring series nurse";
+}
 
-    auto account = accountFromMnemonic(dydxV4Mnemonic, 0);
-    std::string printablePrivateKey(reinterpret_cast<const char *>(account.m_private_key.data()), account.m_private_key.size());
-    std::string printablePublicKey(reinterpret_cast<const char *>(account.m_public_key.data()), account.m_public_key.size());
-    spdlog::info("Account info: .address = {}, .pub_key = {}, .priv_key = {}", account.m_sub_account.m_address,
-                 toolbox::data::base64_encode(printablePublicKey), toolbox::data::base64_encode(printablePrivateKey));
 
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist(0, std::numeric_limits<uint32_t>::max()); // distribution in range [1, 6]
-
-    RestClient validatorRestClient("dydx-lcd-testnet.enigma-validator.com", "443");
+void benchmarkSendNewAndCancelOrder(benchmark::State& state) {
     RestClient indexerRestClient("indexer.v4testnet.dydx.exchange", "443");
     GRPCClient orderGRPCClient("test-dydx-grpc.kingnodes.com:443");
-
-
+    auto nextValidBlockHeight = orderGRPCClient.getLatestBlockHeight() + 1U;
+    auto goodTilBlock = nextValidBlockHeight + 10U;
+    uint32_t clientMetadata = 0U;
     auto marketsJson = indexerRestClient.sendGetRequestAndWaitForResponse("/v4/perpetualMarkets");
     boost::container::flat_map<std::string, MarketInfo> markets;
     markets["ETH-USD"] = fromJson(marketsJson, "ETH-USD");
     markets["BTC-USD"] = fromJson(marketsJson, "BTC-USD");
+    static const std::string dydxV4Mnemonic =
+        "night scan essay distance just royal regret mind various blast swap exit myth raw expire insane slot ranch lock sun wild bring series nurse";
+    std::array<std::string, 10> ordersJson = {
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.576, "price":3475.1})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.6, "price":3575.1})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.589, "price":3675.1})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.7, "price":3775.1})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.452, "price":3476.1})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.577, "price":3477.1})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.578, "price":3478.1})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.589, "price":3479.9})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.58, "price":3475.5})",
+        R"({"baseAsset":2, "exchangeId":81, "level":1, "orderType":1, "buy":true, "cancelAndCreate":true, "timestamp":1709203259489729929, "amount":0.68, "price":3475.6})"};
+    auto orderIndex = 0U;
+    auto localAccount = accountFromMnemonic(dydxV4Mnemonic, 0);
 
-    auto nextValidBlockHeight = orderGRPCClient.getLatestBlockHeight() + 1U;
-    auto goodTilBlock = nextValidBlockHeight + 10U;
-    uint32_t clientMetadata = 0U;
-    auto baseAccount = orderGRPCClient.queryAccount(account.m_sub_account.m_address);
-    spdlog::info("Remote Account: .address = {}, .number = {}, .sequence = {}", baseAccount.address, baseAccount.number, baseAccount.sequence);
-
-
-    order myOrder{};
-    auto ec = glz::read_json<order>(myOrder, full_arg);
-    if (ec) {
-        std::string errorMsg;
-        spdlog::error("Failed to parse order: {}", glz::format_error(ec, full_arg));
-        return EXIT_FAILURE;
+    unsigned char randomize[32];
+    secp256k1_pubkey pubkey;
+    secp256k1_ecdsa_signature signature;
+    /* Before we can call actual API functions, we need to create a "context". */
+    secp256k1_context* signContext = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+    if (!fillRandom(randomize, sizeof(randomize))) {
+        printf("Failed to generate randomness\n");
+        std::exit(EXIT_FAILURE);
     }
-    const auto& market = markets[myOrder.assetToMarket()];
+    /* Randomizing the context is recommended to protect against side-channel
+     * leakage See `secp256k1_context_randomize` in secp256k1.h for more
+     * information about it. This should never fail. */
+    auto randomizeResult = secp256k1_context_randomize(signContext, randomize);
+    assert(randomizeResult);
 
-    // pre allocate all needed memory
-
+    std::random_device dev;
     google::protobuf::Arena arena(nullptr, 8192);
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, std::numeric_limits<uint32_t>::max()); // distribution in range 1 to uint32_max
+    std::string signReservation;
+    signReservation.reserve(64);
+    for (auto i = 0U; i < 64; ++i) {
+        signReservation.push_back('\0');
+    }
 
+    auto remoteAccount = orderGRPCClient.queryAccount(localAccount.m_sub_account.m_address);
 
-    std::array<std::chrono::high_resolution_clock::time_point, numberOfOrders> startTime;
-    std::array<std::chrono::high_resolution_clock::time_point, numberOfOrders> cancelStartTime;
-    std::array<std::chrono::high_resolution_clock::time_point, numberOfOrders> endTime;
-    std::array<std::chrono::high_resolution_clock::time_point, numberOfOrders> cancelEndTime;
-    std::array<std::chrono::nanoseconds, numberOfOrders*2> signTime{};
-    for (int i = 0; i < numberOfOrders; ++i) {
-        startTime[i] = std::chrono::high_resolution_clock::now();
+    auto buyOrder = generatePlaceOrderMessage(localAccount.m_sub_account.m_address, localAccount.m_sub_account.m_number, 0, 0,
+                                              dydxprotocol::clob::Order_Side_SIDE_BUY, dydxprotocol::clob::Order_TimeInForce_TIME_IN_FORCE_UNSPECIFIED, 0U, 0U,
+                                              123456, dydxprotocol::clob::Order_ConditionType_CONDITION_TYPE_UNSPECIFIED, 0U, false, false, clientMetadata);
+
+    auto cancelOrder = generateCancelOrderMessage(remoteAccount.address, localAccount.m_sub_account.m_number, 0U, 0U, 0U, false, false);
+
+    auto* buyTransaction = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::Tx>(&arena);
+    buyTransaction->mutable_body()->add_messages();
+    auto* buyTransactionSign = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::SignDoc>(&arena);
+
+    auto* cancelTransaction = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::Tx>(&arena);
+    cancelTransaction->mutable_body()->add_messages();
+    auto* cancelTransactionSignature = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::SignDoc>(&arena);
+
+    createTx(*buyTransaction, *buyTransactionSign, EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET, localAccount, remoteAccount, buyOrder, 0U);
+    buyTransaction->add_signatures(signReservation);
+
+    createTx(*cancelTransaction, *cancelTransactionSignature, EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET, localAccount, remoteAccount, cancelOrder, 0U);
+    cancelTransaction->add_signatures(signReservation);
+
+    // Perform setup here
+    for (auto _ : state) {
+        Order myOrder{};
+        auto ec = glz::read_json<Order>(myOrder, ordersJson[(++orderIndex) % ordersJson.size()]);
+        // This code gets timed
         auto shortTermClientID = dist(rng);
-        auto* tx = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::Tx>(&arena);
-        tx->mutable_body()->add_messages();
-        auto* txSign = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::SignDoc>(&arena);
+        const auto& market = markets[myOrder.assetToMarket()];
+        const auto quantums = calculateQuantums(myOrder.amount, market.atomicResolution, market.stepBaseQuantums);
+        const auto subticks = calculateSubticks(myOrder.price, market.atomicResolution, market.quantumConversionExponent, market.subticksPerTick);
+        buyOrder.mutable_order()->mutable_order_id()->set_client_id(shortTermClientID);
+        buyOrder.mutable_order()->mutable_order_id()->set_clob_pair_id(market.clobPairID);
+        buyOrder.mutable_order()->set_subticks(subticks);
+        buyOrder.mutable_order()->set_quantums(quantums);
+        buyOrder.mutable_order()->set_good_til_block(goodTilBlock);
 
-        auto* cancelTx = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::Tx>(&arena);
-        cancelTx->mutable_body()->add_messages();
-        auto* cancelTxSign = google::protobuf::Arena::CreateMessage<cosmos::tx::v1beta1::SignDoc>(&arena);
-        auto placeOrder =
-            generatePlaceOrderMessage(account.m_sub_account.m_address, account.m_sub_account.m_number, shortTermClientID, market.clobPairID,
-                                      dydxprotocol::clob::Order_Side_SIDE_BUY, dydxprotocol::clob::Order_TimeInForce_TIME_IN_FORCE_UNSPECIFIED, calculateQuantums(myOrder.amount, market.atomicResolution, market.stepBaseQuantums), calculateSubticks(myOrder.price, market.atomicResolution, market.quantumConversionExponent, market.subticksPerTick),
-                                      goodTilBlock, dydxprotocol::clob::Order_ConditionType_CONDITION_TYPE_UNSPECIFIED, 0U, false, false, clientMetadata);
+        setOrderAndSign(signContext, remoteAccount, buyTransaction, buyTransactionSign, buyOrder, localAccount, signature);
 
-        createTx(*tx, *txSign, EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET, account, baseAccount, placeOrder, 0U, signTime[2*i]);
-        auto hash = orderGRPCClient.broadcastTransaction(*tx, arena, endTime[i]);
+        auto hashResult = orderGRPCClient.broadcastTransaction(*buyTransaction, arena);
 
-        cancelStartTime[i] = std::chrono::high_resolution_clock::now();
-        if (hash) {
-            auto cancel =
-                generateCancelOrderMessage(baseAccount.address, account.m_sub_account.m_number, shortTermClientID, market.clobPairID, goodTilBlock, false, false);
+        cancelOrder.mutable_order_id()->set_client_id(shortTermClientID);
+        cancelOrder.mutable_order_id()->set_clob_pair_id(market.clobPairID);
+        cancelOrder.set_good_til_block(goodTilBlock);
+        setOrderAndSign(signContext, remoteAccount, cancelTransaction, cancelTransactionSignature, cancelOrder, localAccount, signature);
 
-            createTx(*cancelTx, *cancelTxSign, EXCHANGE_CONFIG_LOCAL_PLAINTEXT_NODE_TESTNET, account, baseAccount, cancel, 0U, signTime[(2*i) + 1]);
-            auto cancelHash = orderGRPCClient.broadcastTransaction(*cancelTx, arena, cancelEndTime[i]);
-        } else {
-            cancelEndTime[i] = std::chrono::high_resolution_clock::now();
-            spdlog::error("No hash after order created!!!");
-        }
+        auto cancelHash = orderGRPCClient.broadcastTransaction(*cancelTransaction, arena);
+        buyTransaction->mutable_body()->mutable_messages(0)->Clear();
+        cancelTransaction->mutable_body()->mutable_messages(0)->Clear();
     }
-    uint64_t sumCreate = 0;
-    uint64_t sumCancel = 0;
-    uint64_t sumSign = 0;
-    for (int i = 0; i < 100; ++i) {
-        sumCreate += std::chrono::duration_cast<std::chrono::nanoseconds>(endTime[i] - startTime[i]).count();
-        sumCancel += std::chrono::duration_cast<std::chrono::nanoseconds>(cancelEndTime[i] - cancelStartTime[i]).count();
-        sumSign += signTime[2*i].count() + signTime[(2*i) + 1].count();
-    }
-    spdlog::info("Average create = {} nanoseconds", sumCreate/numberOfOrders);
-    spdlog::info("Average cancel = {} nanoseconds", sumCancel/numberOfOrders);
-    spdlog::info("Average sign = {} nanoseconds", sumSign/(numberOfOrders*2));
-
-
-    return EXIT_SUCCESS;
 }
+
+BENCHMARK(benchmarkSendNewAndCancelOrder);
+// Run the benchmark
+BENCHMARK_MAIN();

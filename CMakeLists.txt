@@ -16,6 +16,8 @@ find_package(toolbox CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
+find_package(benchmark CONFIG REQUIRED)
+
 
 if (BUILD_PROTOBUF_FILES)
     # build from .proto files
@@ -226,29 +228,34 @@ else()
 endif()
 
 SET(SOURCES
-        src/main.cpp
         include/order.h
         include/bech32.h
-        src/bech32.cpp
-        include/account.h
-        include/rest_client.h
-        src/grpc_client.cpp
-        src/account.cpp
         include/grpc_client.h
         include/dydx_config.h
         include/market_info.h
+        include/account.h
+        include/rest_client.h
+        src/bech32.cpp
+        src/main.cpp
+        src/grpc_client.cpp
+        src/account.cpp
+        src/order.cpp
 )
+
+add_subdirectory(dependencies/secp256k1)
 
 add_executable(${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include/trezor-crypto)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/dependencies/secp256k1/include)
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC
         proto-objects
         gtest::gtest
+        benchmark::benchmark_main
         Boost::boost
         openssl::openssl
         spdlog::spdlog
@@ -257,7 +264,8 @@ target_link_libraries(${PROJECT_NAME}
         grpc::grpc
         toolbox::toolbox
         bip3x::bip3x
-        glaze::glaze)
+        glaze::glaze
+        secp256k1)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
 set_property(TARGET ${PROJECT_NAME} PROPERTY

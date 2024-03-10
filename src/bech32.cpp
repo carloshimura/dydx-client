@@ -26,7 +26,7 @@ template <typename V> inline V Cat(V v1, const V& v2) {
 typedef std::vector<uint8_t> data;
 
 /** The Bech32 and Bech32m character set for encoding. */
-const char *CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+const char* CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
 /** The Bech32 and Bech32m character set for decoding. */
 const int8_t CHARSET_REV[128] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

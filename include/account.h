@@ -5,15 +5,14 @@
 #ifndef DYDX_CLIENT_ACCOUNT_H
 #define DYDX_CLIENT_ACCOUNT_H
 
-
 #include "bech32.h"
 
-#include <toolbox/data/bytes_array.h>
-#include <toolbox/data/base64.h>
 #include <bip3x/bip3x_hdkey_encoder.h>
 #include <bip3x/bip3x_mnemonic.h>
 #include <bip3x/crypto/ripemd160.h>
 #include <bip3x/crypto/sha2.hpp>
+#include <toolbox/data/base64.h>
+#include <toolbox/data/bytes_array.h>
 
 #include <cstdint>
 #include <string>
@@ -29,12 +28,11 @@ struct LocalAccount {
     };
     SubAccount m_sub_account;
     std::string m_mnemonic;
-    toolbox::data::bytes_array<33> m_public_key;
-    toolbox::data::bytes_array<32> m_private_key;
+    std::array<unsigned char, 33> m_public_key;
+    std::array<unsigned char, 32> m_private_key;
+    std::string m_encoded_key;
     mutable uint64_t m_sequence{0};
-    uint64_t getSequence() const {
-        return m_sequence++;
-    }
+    uint64_t getSequence() const { return m_sequence; }
 };
 
 struct RemoteAccount {
@@ -53,7 +51,6 @@ constexpr AssetId ASSET_USDC = 0;
 inline const std::string BECH32_PREFIX = "dydx";
 inline const std::string BIP44_DERIVATION_PATH = "m/44'/118'/0'/0/0";
 
-LocalAccount accountFromMnemonic(std::string mnemonic, uint32_t subaccount_number);
-
+LocalAccount accountFromMnemonic(std::string mnemonic, uint32_t subAccountNumber);
 
 #endif // DYDX_CLIENT_ACCOUNT_H

@@ -21,13 +21,14 @@ class GRPCClient {
 public:
     explicit GRPCClient(const std::string& address);
     void sendOrder(dydxprotocol::clob::MsgPlaceOrder& msgPlaceOrder);
-    std::optional<std::string> broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, google::protobuf::Arena& arena, std::chrono::time_point<std::chrono::high_resolution_clock>& aTime);
+    std::optional<std::string> broadcastTransaction(cosmos::tx::v1beta1::Tx& tx, google::protobuf::Arena& arena);
     RemoteAccount queryAccount(const std::string& address);
     int64_t getLatestBlockHeight();
 
 private:
     grpc::SslCredentialsOptions options;
     std::shared_ptr<grpc::ChannelCredentials> credentials;
+    std::shared_ptr<grpc::Channel> channel_;
     std::unique_ptr<dydxprotocol::clob::Msg::Stub> stub_;
     std::unique_ptr<cosmos::tx::v1beta1::TxService::Stub> txStub_;
     std::unique_ptr<cosmos::auth::v1beta1::Query::Stub> queryStub_;
