@@ -26,7 +26,8 @@ int fillRandom(unsigned char* data, size_t size) {
 
 
 void benchmarkSendNewAndCancelOrder(benchmark::State& state) {
-    constexpr bool shouldSendOrders = true;
+    constexpr bool shouldSendOrders = false;
+    constexpr bool sendCancel = false;
     RestClient indexerRestClient("indexer.v4testnet.dydx.exchange", "443");
     GRPCClient orderGRPCClient("test-dydx-grpc.kingnodes.com:443");
     auto nextValidBlockHeight = orderGRPCClient.getLatestBlockHeight() + 1U;
@@ -120,15 +121,17 @@ void benchmarkSendNewAndCancelOrder(benchmark::State& state) {
             auto hashResult = orderGRPCClient.broadcastTransaction(*buyTransaction, arena);
         }
 
+        if constexpr (sendCancel) {
+            cancelOrder.mutable_order_id()->set_client_id(shortTermClientID);
+            cancelOrder.mutable_order_id()->set_clob_pair_id(market.clobPairID);
+            cancelOrder.set_good_til_block(goodTilBlock);
+            setOrderAndSign(signContext, remoteAccount, cancelTransaction, cancelTransactionSignature, cancelOrder, localAccount, signature);
 
-        cancelOrder.mutable_order_id()->set_client_id(shortTermClientID);
-        cancelOrder.mutable_order_id()->set_clob_pair_id(market.clobPairID);
-        cancelOrder.set_good_til_block(goodTilBlock);
-        setOrderAndSign(signContext, remoteAccount, cancelTransaction, cancelTransactionSignature, cancelOrder, localAccount, signature);
-
-        if constexpr (shouldSendOrders) {
-            auto cancelHash = orderGRPCClient.broadcastTransaction(*cancelTransaction, arena);
+            if constexpr (shouldSendOrders) {
+                auto cancelHash = orderGRPCClient.broadcastTransaction(*cancelTransaction, arena);
+            }
         }
+
         buyTransaction->mutable_body()->mutable_messages(0)->Clear();
         cancelTransaction->mutable_body()->mutable_messages(0)->Clear();
     }
